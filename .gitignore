@@ -1,0 +1,8 @@
+.DS_Store
+.venv/
+__pycache__/
+*.pyc
+output/
+Results/*.wav
+Results/*.txt
+whisper.cpp/models/*.bin

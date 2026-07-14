@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c0b12">
+  <meta name="description" content="Speak to MurmurX: a private voice pipeline with optional on-device Qwen inference in the browser.">
+  <title>MurmurX — Try the Voice AI Pipeline</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <header class="site-header">
+    <a class="brand" href="#top"><span>MURMUR</span><i>X</i></a>
+    <nav aria-label="Primary navigation">
+      <a href="#demo">Try it now</a>
+      <a href="#pipeline">How it works</a>
+      <a href="https://github.com/MohamadKanso/MurmurX" target="_blank" rel="noopener">Source ↗</a>
+    </nav>
+    <span class="privacy-state"><i></i> local-first</span>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span>01</span> A voice assistant that stays close</p>
+        <h1>Say it.<br><em>Think locally.</em><br>Hear it back.</h1>
+        <p class="hero-lede">MurmurX turns your voice into text, asks a local Qwen model for a concise answer, then speaks the answer back—without building a cloud account around your conversations.</p>
+        <div class="hero-actions">
+          <a class="try-button" href="#demo"><span>TRY IT NOW</span><strong>Open the voice lab</strong><b>↘</b></a>
+          <p><i></i><span>Your typed conversation stays in this tab.</span></p>
+        </div>
+      </div>
+
+      <div class="voice-object" aria-label="Animated voice pipeline visual">
+        <div class="orbit orbit-a"></div>
+        <div class="orbit orbit-b"></div>
+        <div class="voice-core">
+          <div class="wave-bars" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <span>VOICE / LOCAL AI</span>
+        </div>
+        <div class="node node-a"><span>01</span><b>LISTEN</b></div>
+        <div class="node node-b"><span>02</span><b>TRANSCRIBE</b></div>
+        <div class="node node-c"><span>03</span><b>REASON</b></div>
+        <div class="node node-d"><span>04</span><b>SPEAK</b></div>
+      </div>
+    </section>
+
+    <section class="feature-rail" aria-label="MurmurX system properties">
+      <article><span>STT</span><strong>Whisper.cpp</strong><small>desktop pipeline</small></article>
+      <article><span>LLM</span><strong>Qwen 2.5 3B</strong><small>through Ollama</small></article>
+      <article><span>TTS</span><strong>System voice</strong><small>spoken output</small></article>
+      <article><span>DATA</span><strong>Local by design</strong><small>no app cloud</small></article>
+    </section>
+
+    <section class="demo-section" id="demo">
+      <div class="section-intro">
+        <p class="eyebrow"><span>02</span> Interactive browser lab</p>
+        <h2>Talk to the<br><em>pipeline.</em></h2>
+        <div class="intro-note">
+          <span>TRY IT NOW</span>
+          <p>Load Qwen Lite for real on-device model replies, or open the instant guided preview to explore the interface first.</p>
+        </div>
+      </div>
+
+      <div class="demo-shell" data-engine="idle">
+        <aside class="engine-panel">
+          <div class="panel-label"><span>MODEL BAY / 01</span><b id="engine-badge">NOT LOADED</b></div>
+          <div class="model-card">
+            <div class="model-orb"><span>Q</span><i></i></div>
+            <p>BROWSER MODEL</p>
+            <h3>Qwen 2.5<br>0.5B Instruct</h3>
+            <ul>
+              <li><span>Runs</span><strong>on your GPU</strong></li>
+              <li><span>Memory</span><strong>about 1 GB</strong></li>
+              <li><span>Context</span><strong>4,096 tokens</strong></li>
+            </ul>
+          </div>
+          <div class="load-progress" aria-hidden="true"><i id="load-progress"></i></div>
+          <p class="engine-status" id="engine-status" role="status">Choose a mode to begin. Qwen Lite requires a WebGPU browser and downloads model files on first use.</p>
+          <button class="load-model" id="load-model" type="button"><span>LOAD REAL QWEN LITE</span><b>Runs on this device ↗</b></button>
+          <button class="guided-mode" id="guided-mode" type="button"><span>Open instant guided preview</span><b>No model download</b></button>
+          <div class="truth-note">
+            <span>MODEL TRUTH</span>
+            <p>The desktop project uses Qwen 2.5 3B. This page uses the smaller 0.5B Qwen from the same family so a compatible laptop can run it in-browser.</p>
+          </div>
+        </aside>
+
+        <section class="conversation-panel" aria-label="MurmurX conversation">
+          <div class="conversation-head">
+            <div><span>SESSION / EPHEMERAL</span><strong id="session-mode">CHOOSE ENGINE</strong></div>
+            <label class="voice-toggle"><input id="voice-output" type="checkbox" checked><span>Speak replies</span></label>
+          </div>
+
+          <div class="pipeline-meter" id="pipeline-meter" aria-label="Voice pipeline stages">
+            <span data-stage="listen"><i>01</i>Listen</span>
+            <b></b>
+            <span data-stage="transcribe"><i>02</i>Transcribe</span>
+            <b></b>
+            <span data-stage="reason"><i>03</i>Reason</span>
+            <b></b>
+            <span data-stage="speak"><i>04</i>Speak</span>
+          </div>
+
+          <div class="messages" id="messages" aria-live="polite">
+            <article class="message assistant">
+              <span>MURMURX / READY</span>
+              <p>Choose real Qwen Lite or the guided preview. Then type a message—or use the microphone in a supported browser.</p>
+            </article>
+          </div>
+
+          <div class="sample-prompts" aria-label="Example prompts">
+            <span>Try asking</span>
+            <button type="button">Explain RAG simply</button>
+            <button type="button">Plan a focused morning</button>
+            <button type="button">What makes AI private?</button>
+          </div>
+
+          <div class="composer">
+            <button class="mic-button" id="mic-button" type="button" aria-label="Speak to MurmurX" disabled>
+              <span class="mic-icon"><i></i></span>
+              <span class="mic-copy"><small>MICROPHONE</small><strong id="mic-label">Choose an engine first</strong></span>
+              <span class="mini-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+            </button>
+            <div class="text-composer">
+              <label class="sr-only" for="message-input">Message MurmurX</label>
+              <textarea id="message-input" rows="2" placeholder="Choose an engine, then ask MurmurX anything…" disabled></textarea>
+              <button id="send-button" type="button" disabled><span>Send</span><b>↗</b></button>
+            </div>
+          </div>
+          <p class="browser-note" id="browser-note">Microphone transcription uses your browser's speech service and may not be fully local. Typed messages and Qwen inference remain in this tab.</p>
+        </section>
+      </div>
+    </section>
+
+    <section class="pipeline-section" id="pipeline">
+      <div class="section-intro compact">
+        <p class="eyebrow"><span>03</span> The real desktop pipeline</p>
+        <h2>Four small steps.<br><em>One private loop.</em></h2>
+      </div>
+      <div class="pipeline-grid">
+        <article><span>01 / CAPTURE</span><div class="step-visual bars"><i></i><i></i><i></i><i></i><i></i></div><h3>Listen until silence.</h3><p>PyAudio records 16 kHz mono sound. WebRTC VAD notices when you stop speaking, so no button press is needed.</p></article>
+        <article><span>02 / TRANSCRIBE</span><div class="step-visual letters"><i>W</i><i>H</i><i>I</i><i>S</i><i>P</i><i>E</i><i>R</i></div><h3>Turn sound into words.</h3><p>Whisper.cpp runs on the computer and writes the transcript. Audio does not need to be uploaded to the MurmurX app.</p></article>
+        <article><span>03 / REASON</span><div class="step-visual tokens"><i>Q</i><i>2.5</i><i>3B</i></div><h3>Ask a local model.</h3><p>Qwen 2.5 3B receives a short system instruction plus the latest conversation turns, then returns a concise answer.</p></article>
+        <article><span>04 / SPEAK</span><div class="step-visual rings"><i></i><i></i><i></i></div><h3>Hear the answer.</h3><p>The operating system reads the answer aloud. Then the loop is ready for the next question.</p></article>
+      </div>
+    </section>
+
+    <section class="difference-section">
+      <div>
+        <p class="eyebrow"><span>04</span> Demo versus desktop</p>
+        <h2>No hidden<br><em>pretending.</em></h2>
+      </div>
+      <div class="comparison">
+        <article><span>THIS BROWSER DEMO</span><h3>Easy to try</h3><p>Browser microphone transcription, Qwen 2.5 0.5B through WebLLM, and browser speech synthesis. The guided preview is clearly labelled and is not an AI model.</p></article>
+        <article><span>THE GITHUB PROJECT</span><h3>The full local build</h3><p>WebRTC voice activity detection, Whisper.cpp transcription, Qwen 2.5 3B through Ollama, short conversation memory, and macOS spoken output.</p></article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div><strong>MURMURX</strong><p>A small local voice loop by Mohamad Kanso.</p></div>
+    <p>For the best browser demo experience, use a recent desktop Chrome with WebGPU enabled.</p>
+    <a href="#top">Back to top ↑</a>
+  </footer>
+</body>
+</html>
