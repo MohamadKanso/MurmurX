@@ -7,6 +7,12 @@ const state = {
   history: [],
   busy: false,
   recognition: null,
+  speechSessionActive: false,
+  recognitionActive: false,
+  speechFinal: "",
+  speechInterim: "",
+  recognitionRestartTimer: null,
+  recognitionError: "",
 };
 
 const els = {
@@ -39,8 +45,81 @@ function setEngineMode(mode) {
   els.micLabel.textContent = !state.recognition
     ? "Speech input unavailable — type below"
     : ready
-      ? "Tap, speak, then pause"
+      ? "Tap to start listening"
       : "Choose an engine first";
+}
+
+function showListeningState(message = "Listening… tap again to stop") {
+  els.shell.classList.add("is-listening");
+  els.mic.setAttribute("aria-pressed", "true");
+  els.mic.setAttribute("aria-label", "Stop listening and send to MurmurX");
+  els.micLabel.textContent = message;
+  setStage("listen");
+}
+
+function showIdleMicState(message = "Tap to start listening") {
+  els.shell.classList.remove("is-listening");
+  els.mic.setAttribute("aria-pressed", "false");
+  els.mic.setAttribute("aria-label", "Start listening to speak to MurmurX");
+  els.micLabel.textContent = message;
+}
+
+function finishSpeechCapture() {
+  window.clearTimeout(state.recognitionRestartTimer);
+  state.recognitionRestartTimer = null;
+  state.recognitionActive = false;
+  els.mic.disabled = state.busy || state.mode === "idle" || !state.recognition;
+
+  if (state.recognitionError) {
+    showIdleMicState(state.recognitionError);
+    setStage(null);
+    return;
+  }
+
+  const transcript = els.input.value.trim();
+  if (!transcript) {
+    showIdleMicState("No speech heard — tap to try again");
+    setStage(null);
+    return;
+  }
+
+  showIdleMicState("Sending transcript…");
+  setStage("transcribe");
+  window.setTimeout(sendMessage, 140);
+}
+
+function startSpeechCapture() {
+  if (!state.recognition || state.busy || state.speechSessionActive || state.recognitionActive) return;
+  speechSynthesis.cancel();
+  window.clearTimeout(state.recognitionRestartTimer);
+  state.recognitionRestartTimer = null;
+  state.recognitionError = "";
+  state.speechFinal = "";
+  state.speechInterim = "";
+  state.speechSessionActive = true;
+  els.input.value = "";
+  showListeningState("Starting microphone… tap again to stop");
+  try {
+    state.recognition.start();
+  } catch (error) {
+    state.speechSessionActive = false;
+    state.recognitionError = `Microphone could not start: ${error.message}`;
+    finishSpeechCapture();
+  }
+}
+
+function stopSpeechCapture() {
+  if (!state.recognition || !state.speechSessionActive) return;
+  state.speechSessionActive = false;
+  window.clearTimeout(state.recognitionRestartTimer);
+  state.recognitionRestartTimer = null;
+  els.mic.disabled = true;
+  showIdleMicState("Stopping microphone…");
+  if (state.recognitionActive) {
+    state.recognition.stop();
+  } else {
+    finishSpeechCapture();
+  }
 }
 
 function setStage(stage) {
@@ -174,7 +253,7 @@ function speak(text) {
 
 async function sendMessage() {
   const prompt = els.input.value.trim();
-  if (!prompt || state.busy || (state.mode === "qwen" && !state.engine)) return;
+  if (!prompt || state.busy || state.speechSessionActive || (state.mode === "qwen" && !state.engine)) return;
   state.busy = true;
   els.send.disabled = true;
   els.mic.disabled = true;
@@ -201,6 +280,7 @@ async function sendMessage() {
     state.busy = false;
     els.send.disabled = false;
     els.mic.disabled = !state.recognition;
+    if (state.recognition) showIdleMicState();
     els.input.focus();
     speak(reply);
   }
@@ -215,31 +295,65 @@ function setupSpeechRecognition() {
   const recognition = new Recognition();
   recognition.lang = "en-GB";
   recognition.interimResults = true;
-  recognition.continuous = false;
+  recognition.continuous = true;
   recognition.maxAlternatives = 1;
   recognition.onstart = () => {
-    els.shell.classList.add("is-listening");
-    els.micLabel.textContent = "Listening… pause when finished";
-    setStage("listen");
+    state.recognitionActive = true;
+    if (!state.speechSessionActive) {
+      recognition.stop();
+      return;
+    }
+    showListeningState();
   };
   recognition.onresult = (event) => {
-    const transcript = [...event.results].map((result) => result[0].transcript).join(" ");
-    els.input.value = transcript;
-    setStage("transcribe");
-    if (event.results[event.results.length - 1].isFinal) {
-      window.setTimeout(sendMessage, 180);
+    let interim = "";
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      const result = event.results[index];
+      const transcript = result[0]?.transcript?.trim() || "";
+      if (!transcript) continue;
+      if (result.isFinal) {
+        state.speechFinal = `${state.speechFinal} ${transcript}`.trim();
+      } else {
+        interim = `${interim} ${transcript}`.trim();
+      }
     }
+    state.speechInterim = interim;
+    els.input.value = `${state.speechFinal} ${state.speechInterim}`.trim();
+    setStage("transcribe");
   };
   recognition.onerror = (event) => {
-    els.micLabel.textContent = event.error === "not-allowed" ? "Microphone permission was denied" : `Speech input stopped: ${event.error}`;
-    setStage(null);
+    if (event.error === "no-speech" && state.speechSessionActive) {
+      showListeningState("Still listening… tap again to stop");
+      return;
+    }
+    if (event.error === "aborted" && !state.speechSessionActive) return;
+    state.speechSessionActive = false;
+    state.recognitionError = event.error === "not-allowed"
+      ? "Microphone permission was denied"
+      : `Speech input stopped: ${event.error}`;
   };
   recognition.onend = () => {
-    els.shell.classList.remove("is-listening");
-    if (!state.busy) {
-      els.micLabel.textContent = "Tap, speak, then pause";
-      setStage(null);
+    state.recognitionActive = false;
+    if (state.speechSessionActive && !state.busy) {
+      if (state.speechInterim) {
+        state.speechFinal = `${state.speechFinal} ${state.speechInterim}`.trim();
+        state.speechInterim = "";
+        els.input.value = state.speechFinal;
+      }
+      showListeningState("Still listening… tap again to stop");
+      state.recognitionRestartTimer = window.setTimeout(() => {
+        if (!state.speechSessionActive || state.busy) return;
+        try {
+          recognition.start();
+        } catch (error) {
+          state.speechSessionActive = false;
+          state.recognitionError = `Speech input stopped: ${error.message}`;
+          finishSpeechCapture();
+        }
+      }, 140);
+      return;
     }
+    finishSpeechCapture();
   };
   state.recognition = recognition;
 }
@@ -255,12 +369,8 @@ els.input.addEventListener("keydown", (event) => {
 });
 els.mic.addEventListener("click", () => {
   if (!state.recognition || state.busy) return;
-  speechSynthesis.cancel();
-  try {
-    state.recognition.start();
-  } catch {
-    state.recognition.stop();
-  }
+  if (state.speechSessionActive) stopSpeechCapture();
+  else startSpeechCapture();
 });
 els.samples.forEach((button) => {
   button.addEventListener("click", () => {

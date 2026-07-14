@@ -22,6 +22,9 @@ The live website gives you two choices:
 The website uses the smaller 0.5B Qwen model because it can run on more laptops.
 The full desktop project uses Qwen 2.5 3B.
 
+For voice input, tap the microphone once to start listening. Speak for as long
+as you need, including pauses, then tap it again to stop and send the transcript.
+
 > Browser microphone transcription may use your browser provider's speech
 > service. Typed messages and Qwen Lite inference stay in the browser tab.
 

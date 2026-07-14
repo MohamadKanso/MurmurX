@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script src="app.js" defer></script>
+  <script src="app.js?v=20260714-2" defer></script>
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
@@ -112,7 +112,7 @@
           <div class="messages" id="messages" aria-live="polite">
             <article class="message assistant">
               <span>MURMURX / READY</span>
-              <p>Choose real Qwen Lite or the guided preview. Then type a message—or use the microphone in a supported browser.</p>
+              <p>Choose real Qwen Lite or the guided preview. Type a message, or tap the microphone once to listen and again to stop.</p>
             </article>
           </div>
 
@@ -124,7 +124,7 @@
           </div>
 
           <div class="composer">
-            <button class="mic-button" id="mic-button" type="button" aria-label="Speak to MurmurX" disabled>
+            <button class="mic-button" id="mic-button" type="button" aria-label="Start listening to speak to MurmurX" aria-pressed="false" disabled>
               <span class="mic-icon"><i></i></span>
               <span class="mic-copy"><small>MICROPHONE</small><strong id="mic-label">Choose an engine first</strong></span>
               <span class="mini-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
